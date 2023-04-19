@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: AbhisekDas
+
+pragma solidity ^0.8.0;
+
+contract DrugTracking {
+    struct Drug {
+        string drugName;
+        string manufacturerName;
+        uint256 mfgDate;
+        string batchNumber;
+        uint256 expiryDate;
+        bool isAuthentic;
+        string hashValue;
+        address manufacturerAddress;
+        address adminAddress;
+        bool isAdmin;
+        bool isSold; // New field to track if drug is sold
+    }
+
+    mapping(uint256 => Drug) public drugs;
+    uint256 public drugCount;
+
+    event DrugAdded(
+        uint256 indexed key,
+        string drugName,
+        string manufacturerName,
+        uint256 mfgDate,
+        string batchNumber,
+        uint256 expiryDate,
+        string hashValue
+    );
+
+    event DrugVerified(
+        uint256 indexed key,
+        string drugName,
+        string manufacturerName,
+        uint256 mfgDate,
+        string batchNumber,
+        uint256 expiryDate,
+        bool isAuthentic
+    );
+
+    event DrugMarkedAsSold(
+        uint256 indexed key,
+        string drugName,
+        string manufacturerName,
+        uint256 mfgDate,
+        string batchNumber,
+        uint256 expiryDate
+    );
+
+    constructor() {
+        drugCount = 0;
+    }
+
+    function addDrug(
+        string memory _drugName,
+        string memory _manufacturerName,
+        uint256 _mfgDate,
+        string memory _batchNumber,
+        uint256 _expiryDate,
+        string memory _hashValue,
+        address _manufacturerAddress,
+        address _adminAddress,
+        bool _isAdmin
+    ) public {
+        drugs[drugCount] = Drug(
+            _drugName,
+            _manufacturerName,
+            _mfgDate,
+            _batchNumber,
+            _expiryDate,
+            false, // Mark the drug as not authentic by default
+            _hashValue,
+            _manufacturerAddress,
+            _adminAddress,
+            _isAdmin,
+            false // Mark the drug as unsold by default
+        );
+        emit DrugAdded(drugCount, _drugName, _manufacturerName, _mfgDate, _batchNumber, _expiryDate, _hashValue);
+        drugCount++;
+    }
+
+    function verifyDrug(uint256 _key) public view returns (string memory, string memory, uint256, string memory, uint256, bool) {
+        Drug memory drug = drugs[_key];
+        return (
+            drug.drugName,
+            drug.manufacturerName,
+            drug.mfgDate,
+            drug.batchNumber,
+            drug.expiryDate,
+            drug.isAuthentic
+        );
+    }
+
+    function markAsSold(uint256 _key) public {
+        require(drugs[_key].isSold == false, "Drug is already marked as sold");
+        drugs[_key].isSold = true;
+        emit DrugMarkedAsSold(
+            _key,
+            drugs[_key].drugName,
+            drugs[_key].manufacturerName,
+            drugs[_key].mfgDate,
+            drugs[_key].batchNumber,
+            drugs[_key].expiryDate
+        );
+    }
+}

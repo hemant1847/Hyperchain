@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: AbhisekDas
+
+pragma solidity ^0.8.0;
+
+contract DrugTracking {
+    
+    struct Drug {
+        string drugName;
+        string manufacturerName;
+        uint256 mfgDate;
+        string batchNumber;
+        uint256 expiryDate;
+        bool isAuthentic;
+        string key;
+        address manufacturerAddress;
+        address adminAddress;
+        bool isAdmin;
+        bool isSold;
+    }
+
+    mapping(string => Drug) public drugs;
+    uint256 public drugCount;
+
+    event DrugAdded(uint256 drugId, string drugName, string manufacturerName, uint256 mfgDate, string batchNumber, uint256 expiryDate, string key);
+    event DrugVerified(string key, string drugName, string manufacturerName, uint256 mfgDate, string batchNumber, uint256 expiryDate, bool isAuthentic);
+    event DrugSold(string key, bool isSold);
+    
+    address public adminAddress;
+
+    constructor(address _adminAddress) {
+        adminAddress = _adminAddress;
+    }
+
+    modifier onlyManufacturer() {
+        require(msg.sender == adminAddress, "Sender is not a manufacturer");
+        _;
+    }
+
+    modifier onlyRetailer() {
+        require(drugs[drugs[_key].key].adminAddress == msg.sender && drugs[drugs[_key].key].isAdmin == true, "Sender is not a retailer");
+        _;
+    }
+
+    function addDrug(string memory _drugName, string memory _manufacturerName, uint256 _mfgDate, string memory _batchNumber, uint256 _expiryDate, string memory _key) public onlyManufacturer {
+        drugs[_key] = Drug(_drugName, _manufacturerName, _mfgDate, _batchNumber, _expiryDate, true, _key, msg.sender, adminAddress, true, false);
+        drugCount++;
+        emit DrugAdded(drugCount, _drugName, _manufacturerName, _mfgDate, _batchNumber, _expiryDate, _key);
+    }
+
+    function verifyDrug(string memory _key) public view returns (string memory, string memory, uint256, string memory, uint256, bool, bool) {
+        Drug storage drug = drugs[_key];
+        return (drug.drugName, drug.manufacturerName, drug.mfgDate, drug.batchNumber, drug.expiryDate, drug.isAuthentic, drug.isSold);
+    }
+
+    function markDrugAsSold(string memory _key) public onlyRetailer {
+        drugs[_key].isSold = true;
+        emit DrugSold(_key, true);
+    }
+
+    function markDrugAsUnsold(string memory _key) public onlyRetailer {
+        drugs[_key].isSold = false;
+        emit DrugSold(_key, false);
+    }
+}
